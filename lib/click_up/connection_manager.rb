@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module ClickUp
+
+  # FIXME: requests are limited to 100 requests per minute
   class ConnectionManager
     attr_reader :path, :data
 
@@ -10,22 +12,52 @@ module ClickUp
     end
 
     def get
-      net_http_response = https_client.request_get(resource_url.path, default_headers)
-      format_response(net_http_response.body)
+      request_block do
+        https_client.request_get(resource_url, default_headers)
+      end
     end
 
     def post
-      form_data = data.to_json if data.is_a?(Hash) && data.size > 0
-      net_http_response = https_client.request_post(resource_url.path, form_data, default_headers)
-      format_response(net_http_response.body)
+      request_block do
+        form_data = data.to_json if data.is_a?(Hash) && data.size > 0
+        https_client.request_post(resource_url.path, form_data, default_headers)
+      end
+    end
+
+    def put
+      request_block do
+        form_data = data.to_json if data.is_a?(Hash) && data.size > 0
+        https_client.request_put(resource_url.path, form_data, default_headers)
+      end
     end
 
     def delete
-      net_http_response = https_client.delete(resource_url.path, default_headers)
-      format_response(net_http_response.body)
+      request_block do
+        net_http_response = https_client.delete(resource_url, default_headers)
+        format_response(net_http_response.body)
+      end
     end
 
     private
+
+    def request_block
+      net_http_response = yield
+      res = format_response(net_http_response.body)
+      if net_http_response.code != 200
+        puts "Got error with code '#{net_http_response.code}': #{res['err']}"
+        if res.key?('err') && res['ECODE'] == 'APP_002'
+          puts "Got error with code '#{net_http_response.code}': #{res['err']}"
+          puts 'Waiting for 30 seconds to continue'
+          sleep(30)
+          net_http_response = yield
+          return format_response(net_http_response.body)
+        elsif res.key?('err') && res['ECODE'] == 'OAUTH_027'
+          puts 'FIXME: This request is currently not working.' if ClickUp.debug
+        end
+      end
+      res
+    end
+
     def resource_url
       uri = URI("#{api_base}#{namespace}#{path}")
       uri.query = URI.encode_www_form(data) if data.size > 0
@@ -53,6 +85,7 @@ module ClickUp
 
     def https_client
       https = Net::HTTP.new(resource_url.host, resource_url.port)
+      https.set_debug_output($stdout) if ClickUp.debug
       https.use_ssl = true
       https
     end

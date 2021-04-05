@@ -42,6 +42,12 @@ ClickUp::Space.get(323455)
 ClickUp::Space.delete(323455)
 ```
 
+### Additional requests
+
+```ruby
+ClickUp::SpaceTag.get(323455)
+```
+
 ## Folder
 ```ruby
 ClickUp::Folder.create(space_id: 323455, name: 'Folder From API')
@@ -64,6 +70,18 @@ ClickUp::List.create(folder_id: 756376, name: 'Foldered list')
 ClickUp::Task.all(list_id: 4766363)
 
 ClickUp::Task.create(list_id: 4766363, name: 'Task from API')
+
+ClickUp::Task.update(list_id: 4766363, name: 'Task from API')
+```
+
+### Additional requests
+
+```ruby
+ClickUp::TaskLink.create(id: 'gh2ac1', link_to_id: 'gn8dv1')
+
+ClickUp::TaskDependency.create(id: 'gh2ac1')
+
+ClickUp::TaskTag.create(id: 'gh2ac1', tag_name: 'custom-tag')
 ```
 
 # Additional Information

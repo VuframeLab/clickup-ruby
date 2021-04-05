@@ -1,31 +1,29 @@
 # frozen_string_literal: true
 
 module ClickUp
-  class Task < APIResource
-    extend ClickUp::APIOperations::All
+  class TaskTag < APIResource
     extend ClickUp::APIOperations::Create
-    extend ClickUp::APIOperations::Get
-    extend ClickUp::APIOperations::Update
     extend ClickUp::APIOperations::Delete
 
     class << self
+
       def index_path(params={})
-        "/list/#{params[:list_id]}/task"
+        "/task/#{params[:id]}/tag/#{params[:tag_name]}"
       end
 
       def resource_path(params={})
-        "/task/#{params[:id]}"
+        "/task/#{params[:id]}/tag/#{params[:tag_name]}"
       end
 
       def rejected_params
         [
           :id,
-          :list_id
+          :tag_name
         ]
       end
 
       def formatted_params(params)
-        params.reject {|key, _| rejected_params.include?(key) }
+        params.reject { |key, _| rejected_params.include?(key) }
         # {
         #   "name": "New Task Name",
         #   "description": "New Task Description",
