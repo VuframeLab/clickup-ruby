@@ -43,10 +43,11 @@ module ClickUp
     def request_block
       net_http_response = yield
       res = format_response(net_http_response.body)
-      if net_http_response.code != 200
+      unless net_http_response.code == 200 || net_http_response.code == '200'
         puts "Got error with code '#{net_http_response.code}': #{res['err']}"
         if res.key?('err') && res['ECODE'] == 'APP_002'
-          puts "Got error with code '#{net_http_response.code}': #{res['err']}"
+          # This error will be thrown, when we hit the request limit per minute from clickup (100).
+          # We will wait 30 seconds and try it again.
           puts 'Waiting for 30 seconds to continue'
           sleep(30)
           net_http_response = yield
